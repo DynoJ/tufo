@@ -1,0 +1,12 @@
+<div *ngIf="loading" class="p">Loading...</div>
+
+<div class="grid" *ngIf="!loading">
+  <div class="card" *ngFor="let c of climbs" (click)="open(c.id)">
+    <img *ngIf="c.heroUrl" [src]="c.heroUrl" alt="{{c.name}}" />
+    <div class="meta">
+      <div class="title">{{ c.name }}</div>
+      <div class="sub">{{ c.type }} • {{ c.yds || 'N/A' }}</div>
+      <div class="area" *ngIf="c.area">{{ c.area.name }}{{ c.area.state ? ' — ' + c.area.state : '' }}</div>
+    </div>
+  </div>
+</div>

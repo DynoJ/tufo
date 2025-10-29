@@ -1,0 +1,58 @@
+{
+  "Version": 1,
+  "Hash": "MMQl+V6/rSb6RLx4CyRMW56r2H0RiA8iYBLKCtcYafU=",
+  "Source": "Tufo.API",
+  "BasePath": "_content/Tufo.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "Tufo.API/wwwroot",
+      "Source": "Tufo.API",
+      "ContentRoot": "/Users/jackkammerer/tufo/backend/Tufo.API/wwwroot/",
+      "BasePath": "_content/Tufo.API",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "/Users/jackkammerer/tufo/backend/Tufo.API/wwwroot/uploads/sample_birddog_overhead.jpg",
+      "SourceId": "Tufo.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/jackkammerer/tufo/backend/Tufo.API/wwwroot/",
+      "BasePath": "_content/Tufo.API",
+      "RelativePath": "uploads/sample_birddog_overhead.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/uploads/sample_birddog_overhead.jpg"
+    },
+    {
+      "Identity": "/Users/jackkammerer/tufo/backend/Tufo.API/wwwroot/uploads/sample_black_sabbath_overhead.jpg",
+      "SourceId": "Tufo.API",
+      "SourceType": "Discovered",
+      "ContentRoot": "/Users/jackkammerer/tufo/backend/Tufo.API/wwwroot/",
+      "BasePath": "_content/Tufo.API",
+      "RelativePath": "uploads/sample_black_sabbath_overhead.jpg",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot/uploads/sample_black_sabbath_overhead.jpg"
+    }
+  ]
+}

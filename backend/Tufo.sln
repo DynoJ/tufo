@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tufo.API", "Tufo.API\Tufo.API.csproj", "{BA0EDD0D-E391-4D90-9535-C533AEE89B7C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tufo.Core", "Tufo.Core\Tufo.Core.csproj", "{4429D22C-3052-470B-9D1F-97F5A0F94DC2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tufo.Infrastructure", "Tufo.Infrastructure\Tufo.Infrastructure.csproj", "{64110A9B-F794-419E-B586-C7632932FB48}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BA0EDD0D-E391-4D90-9535-C533AEE89B7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BA0EDD0D-E391-4D90-9535-C533AEE89B7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BA0EDD0D-E391-4D90-9535-C533AEE89B7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BA0EDD0D-E391-4D90-9535-C533AEE89B7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4429D22C-3052-470B-9D1F-97F5A0F94DC2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4429D22C-3052-470B-9D1F-97F5A0F94DC2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4429D22C-3052-470B-9D1F-97F5A0F94DC2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4429D22C-3052-470B-9D1F-97F5A0F94DC2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{64110A9B-F794-419E-B586-C7632932FB48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{64110A9B-F794-419E-B586-C7632932FB48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{64110A9B-F794-419E-B586-C7632932FB48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{64110A9B-F794-419E-B586-C7632932FB48}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
