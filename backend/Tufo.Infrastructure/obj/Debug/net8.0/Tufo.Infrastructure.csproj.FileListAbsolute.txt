@@ -9,6 +9,7 @@
 /Users/jackkammerer/tufo/backend/Tufo.Infrastructure/obj/Debug/net8.0/Tufo.Infrastructure.AssemblyInfoInputs.cache
 /Users/jackkammerer/tufo/backend/Tufo.Infrastructure/obj/Debug/net8.0/Tufo.Infrastructure.AssemblyInfo.cs
 /Users/jackkammerer/tufo/backend/Tufo.Infrastructure/obj/Debug/net8.0/Tufo.Infrastructure.csproj.CoreCompileInputs.cache
+/Users/jackkammerer/tufo/backend/Tufo.Infrastructure/obj/Debug/net8.0/Tufo.Infrastructure.sourcelink.json
 /Users/jackkammerer/tufo/backend/Tufo.Infrastructure/obj/Debug/net8.0/Tufo.Inf.66D6B6CD.Up2Date
 /Users/jackkammerer/tufo/backend/Tufo.Infrastructure/obj/Debug/net8.0/Tufo.Infrastructure.dll
 /Users/jackkammerer/tufo/backend/Tufo.Infrastructure/obj/Debug/net8.0/refint/Tufo.Infrastructure.dll
