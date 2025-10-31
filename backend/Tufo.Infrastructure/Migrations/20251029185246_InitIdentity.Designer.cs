@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tufo.Infrastructure;
@@ -11,9 +12,11 @@ using Tufo.Infrastructure;
 namespace Tufo.Infrastructure.Migrations
 {
     [DbContext(typeof(TufoContext))]
-    partial class TufoContextModelSnapshot : ModelSnapshot
+    [Migration("20251029185246_InitIdentity")]
+    partial class InitIdentity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

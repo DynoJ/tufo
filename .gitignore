@@ -1,11 +1,19 @@
 # .NET
 **/bin/
 **/obj/
+*.user
+*.suo
 
 # Node / Angular
 **/node_modules/
 **/dist/
+**/.angular/
+npm-debug.log*
+yarn-error.log*
 
 # Editors / OS
 .vscode/
+.idea/
+*.iml
 .DS_Store
+Thumbs.db
