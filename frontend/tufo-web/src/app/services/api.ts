@@ -42,7 +42,7 @@ export interface Climb {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private base = 'http://localhost:5038/api';
+  private base = '/api'; // ← CHANGED
 
   constructor(private http: HttpClient) {}
 
@@ -55,7 +55,10 @@ export class ApiService {
   }
 
   addNote(id: number, body: string): Observable<RouteNote> {
-    return this.http.post<RouteNote>(`${this.base}/climbs/${id}/notes`, { body });
+    const url = `${this.base}/climbs/${id}/notes`;
+    console.log('API call URL:', url);
+    console.log('ID:', id, 'Body:', body);
+    return this.http.post<RouteNote>(url, { body });
   }
 
   uploadMedia(id: number, file: File, caption?: string): Observable<Media> {

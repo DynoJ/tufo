@@ -28,6 +28,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateIssuerSigningKey = true,
+            ValidateLifetime = false,
             ValidIssuer = jwt["Issuer"],
             ValidAudience = jwt["Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
@@ -35,13 +36,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Global require-auth
-builder.Services.AddAuthorization(o =>
-{
-    o.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
-});
+// Authorization (no global fallback - use [Authorize] per endpoint)
+builder.Services.AddAuthorization();
 
 // MVC
 builder.Services.AddControllers().AddJsonOptions(o =>
@@ -69,13 +65,15 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS for Angular dev
+// CORS for Angular dev - UPDATED
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("ng", p => p
         .WithOrigins("http://localhost:4200")
         .AllowAnyHeader()
-        .AllowAnyMethod());
+        .AllowAnyMethod()
+        .AllowCredentials()
+        .SetIsOriginAllowed(_ => true));
 });
 
 var app = builder.Build();
@@ -86,9 +84,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("ng"); //(before HttpsRedirection)
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseCors("ng");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

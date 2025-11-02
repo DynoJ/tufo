@@ -30,11 +30,12 @@ export class ClimbDetailComponent implements OnInit {
 
   addNote() {
     if (!this.climb || !this.noteText.trim()) return;
+    console.log('Posting note to climb ID:', this.climb.id);
     this.posting = true;
     this.api.addNote(this.climb.id, this.noteText.trim()).subscribe({
       next: n => { this.climb!.notes = [n, ...this.climb!.notes]; this.noteText=''; this.posting=false; },
       error: _ => this.posting=false
-    });
+  });
   }
 
   onFileChange(e: Event) {

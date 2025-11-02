@@ -51,6 +51,7 @@ public class ClimbsController : ControllerBase
 
     // ========== POST create climb ==========
     [HttpPost]
+    [Authorize(Roles = "Admin")] // ← Keep admin-only for creating climbs
     public async Task<ActionResult<Climb>> Create([FromBody] Climb climb)
     {
         _db.Climbs.Add(climb);
@@ -60,11 +61,12 @@ public class ClimbsController : ControllerBase
 
     // ========== POST add a note ==========
     [HttpPost("{id:int}/notes")]
-    [Authorize(Roles = "Admin")]
+    [Authorize] // ← CHANGED: Removed Roles requirement
     public async Task<ActionResult<RouteNote>> AddNote(int id, [FromBody] RouteNote note)
     {
         if (!await _db.Climbs.AnyAsync(c => c.Id == id)) return NotFound();
         note.ClimbId = id;
+        note.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier); // ← ADDED
         _db.RouteNotes.Add(note);
         await _db.SaveChangesAsync();
         return Created($"/api/climbs/{id}", note);
@@ -101,6 +103,7 @@ public class ClimbsController : ControllerBase
         var media = new Media
         {
             ClimbId = id,
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier), // ← ADDED
             Caption = caption,
             Url = $"/uploads/{fname}",
             Bytes = file.Length,
@@ -126,8 +129,8 @@ public class ClimbsController : ControllerBase
                 await FFMpeg.SnapshotAsync(
                     fullPath,
                     thumbFull,
-                    null, // no forced resize
-                    TimeSpan.FromSeconds(Math.Min(1, dur))
+                    null,
+                    TimeSpan.FromSeconds(Math.Min(dur / 2.0, 3.0))
                 );
 
                 media.ThumbnailUrl = $"/uploads/{thumbName}";
