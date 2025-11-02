@@ -30,6 +30,7 @@ public class TufoContext : IdentityDbContext<AppUser>
              .WithMany(a => a.Climbs)
              .HasForeignKey(x => x.AreaId)
              .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.AreaId);
         });
 
         b.Entity<Media>(e =>
@@ -41,6 +42,13 @@ public class TufoContext : IdentityDbContext<AppUser>
              .WithMany(c => c.Media)
              .HasForeignKey(x => x.ClimbId)
              .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.ClimbId);
+            e.HasIndex(x => x.UserId);
+            e.HasIndex(x => x.CreatedAt);
+            e.HasOne<AppUser>()
+             .WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
 
         b.Entity<RouteNote>(e =>
@@ -50,6 +58,12 @@ public class TufoContext : IdentityDbContext<AppUser>
              .WithMany(c => c.Notes)
              .HasForeignKey(x => x.ClimbId)
              .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.ClimbId);
+            e.HasIndex(x => x.UserId);
+            e.HasOne<AppUser>()
+             .WithMany()
+             .HasForeignKey(x => x.UserId)
+             .OnDelete(DeleteBehavior.SetNull);
         });
     }
 }

@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Tufo.Core.Entities;
 using Tufo.Infrastructure;
 using FFMpegCore;
@@ -58,6 +60,7 @@ public class ClimbsController : ControllerBase
 
     // ========== POST add a note ==========
     [HttpPost("{id:int}/notes")]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<RouteNote>> AddNote(int id, [FromBody] RouteNote note)
     {
         if (!await _db.Climbs.AnyAsync(c => c.Id == id)) return NotFound();
@@ -69,6 +72,7 @@ public class ClimbsController : ControllerBase
 
     // ========== POST upload media (image or video) ==========
     [HttpPost("{id:int}/media")]
+    [Authorize]
     [RequestSizeLimit(100_000_000)] // 100MB hard cap
     public async Task<ActionResult<Media>> UploadMedia(int id, IFormFile file, [FromForm] string? caption)
     {
