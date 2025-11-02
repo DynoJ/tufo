@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Tufo.API.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +18,9 @@ builder.Services.AddDbContext<TufoContext>(opt =>
 // Identity
 builder.Services.AddIdentityCore<AppUser>()
     .AddEntityFrameworkStores<TufoContext>();
+
+// OpenBeta Importer Service ← ADD THIS
+builder.Services.AddScoped<OpenBetaImporter>();
 
 // JWT
 var jwt = builder.Configuration.GetSection("Jwt");
@@ -65,15 +69,13 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS for Angular dev - UPDATED
+// CORS for Angular dev
 builder.Services.AddCors(opt =>
 {
     opt.AddPolicy("ng", p => p
-        .WithOrigins("http://localhost:4200")
+        .SetIsOriginAllowed(_ => true)
         .AllowAnyHeader()
-        .AllowAnyMethod()
-        .AllowCredentials()
-        .SetIsOriginAllowed(_ => true));
+        .AllowAnyMethod());
 });
 
 var app = builder.Build();
@@ -84,7 +86,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseCors("ng"); //(before HttpsRedirection)
+app.UseCors("ng");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAuthentication();
