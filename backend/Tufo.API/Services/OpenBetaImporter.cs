@@ -19,45 +19,61 @@ public class OpenBetaImporter
         _client = new GraphQLHttpClient("https://api.openbeta.io/graphql", new NewtonsoftJsonSerializer());
     }
 
-    public async Task<ImportResult> ImportTexasRoutes()
+    public async Task<ImportResult> ImportAreaByName(string areaName)
     {
         var result = new ImportResult();
 
-        // GraphQL query for Texas climbing areas and routes
         var query = new GraphQLRequest
         {
             Query = @"
-                query TexasAreas {
-                    areas(filter: { area_name: { match: ""Texas"" } }) {
+                query SearchArea($name: String!) {
+                    areas(filter: { area_name: { match: $name } }) {
                         area_name
                         uuid
                         metadata {
                             lat
                             lng
                         }
-                        climbs {
-                            name
+                        children {
+                            area_name
                             uuid
-                            type {
-                                trad
-                                sport
-                                bouldering
-                                tr
-                            }
-                            grades {
-                                yds
-                            }
                             metadata {
                                 lat
                                 lng
                             }
-                            content {
-                                description
+                            children {
+                                area_name
+                                uuid
+                                metadata {
+                                    lat
+                                    lng
+                                }
+                                climbs {
+                                    name
+                                    uuid
+                                    type {
+                                        trad
+                                        sport
+                                        bouldering
+                                        tr
+                                    }
+                                    grades {
+                                        yds
+                                    }
+                                    metadata {
+                                        lat
+                                        lng
+                                    }
+                                    content {
+                                        description
+                                    }
+                                }
                             }
                         }
                     }
                 }
-            "
+            ",
+            Variables = new { name = areaName }
         };
 
         try
@@ -70,81 +86,51 @@ public class OpenBetaImporter
                 return result;
             }
 
-            Console.WriteLine($"Found {response.Data.Areas.Count} areas from OpenBeta");
+            Console.WriteLine($"Found {response.Data.Areas.Count} top-level areas matching '{areaName}'");
 
-            foreach (var areaData in response.Data.Areas)
+            foreach (var topLevelData in response.Data.Areas)
             {
-                // Skip areas with no name
-                if (string.IsNullOrWhiteSpace(areaData.AreaName))
-                {
-                    Console.WriteLine("Skipping area with null name");
+                if (string.IsNullOrWhiteSpace(topLevelData.AreaName))
                     continue;
-                }
 
-                Console.WriteLine($"Processing area: {areaData.AreaName} with {areaData.Climbs.Count} climbs");
-
-                // Create or find area
-                var area = await _db.Areas.FirstOrDefaultAsync(a => a.Name == areaData.AreaName);
-                if (area == null)
+                // Create or get top-level area (e.g., "Barton Creek Greenbelt")
+                var topLevel = await GetOrCreateArea(topLevelData, null);
+                if (topLevel != null)
                 {
-                    area = new Area
-                    {
-                        Name = areaData.AreaName,
-                        State = "TX",
-                        Country = "United States",
-                        Lat = areaData.Metadata?.Lat,
-                        Lng = areaData.Metadata?.Lng
-                    };
-                    _db.Areas.Add(area);
-                    await _db.SaveChangesAsync();
                     result.AreasImported++;
-                }
+                    Console.WriteLine($"Top-level area: {topLevel.Name}");
 
-                // Import climbs (Sport and Boulder only)
-                foreach (var climbData in areaData.Climbs)
-                {
-                    // Skip climbs with no name
-                    if (string.IsNullOrWhiteSpace(climbData.Name))
-                        continue;
-
-                    // Filter: only sport and boulder
-                    var isSport = climbData.Type?.Sport ?? false;
-                    var isBoulder = climbData.Type?.Bouldering ?? false;
-                    
-                    if (!isSport && !isBoulder)
-                        continue;
-
-                    // Check if already exists
-                    var exists = await _db.Climbs.AnyAsync(c => 
-                        c.Source == "OpenBeta" && c.SourceId == climbData.Uuid);
-                    
-                    if (exists)
+                    // Process sub-areas (e.g., "Gus Fruh", "Maggie's Wall")
+                    foreach (var subAreaData in topLevelData.Children)
                     {
-                        result.ClimbsSkipped++;
-                        continue;
+                        if (string.IsNullOrWhiteSpace(subAreaData.AreaName))
+                            continue;
+
+                        var subArea = await GetOrCreateArea(subAreaData, topLevel.Id);
+                        if (subArea != null)
+                        {
+                            result.AreasImported++;
+                            Console.WriteLine($"  Sub-area: {subArea.Name}");
+
+                            // Process walls (e.g., "Main Wall", "North Face")
+                            foreach (var wallData in subAreaData.Children)
+                            {
+                                if (string.IsNullOrWhiteSpace(wallData.AreaName))
+                                    continue;
+
+                                var wall = await GetOrCreateArea(wallData, subArea.Id);
+                                if (wall != null)
+                                {
+                                    result.AreasImported++;
+                                    Console.WriteLine($"    Wall: {wall.Name} with {wallData.Climbs.Count} climbs");
+
+                                    // Import climbs on this wall
+                                    await ImportClimbs(wallData.Climbs, wall.Id, result);
+                                }
+                            }
+                        }
                     }
-
-                    // Determine primary type
-                    string climbType = isSport ? "Sport" : "Boulder";
-
-                    var climb = new Climb
-                    {
-                        AreaId = area.Id,
-                        Name = climbData.Name,
-                        Type = climbType,
-                        Yds = climbData.Grades?.Yds,
-                        Description = climbData.Content?.Description,
-                        Lat = climbData.Metadata?.Lat,
-                        Lng = climbData.Metadata?.Lng,
-                        Source = "OpenBeta",
-                        SourceId = climbData.Uuid
-                    };
-
-                    _db.Climbs.Add(climb);
-                    result.ClimbsImported++;
                 }
-
-                await _db.SaveChangesAsync();
             }
 
             return result;
@@ -156,14 +142,84 @@ public class OpenBetaImporter
         }
     }
 
-    private static string CapitalizeFirstLetter(string str)
+    private async Task<Area?> GetOrCreateArea(AreaData areaData, int? parentId)
     {
-        if (string.IsNullOrEmpty(str)) return str;
-        return char.ToUpper(str[0]) + str.Substring(1).ToLower();
+        // Try to find existing by name and parent
+        var existing = await _db.Areas
+            .FirstOrDefaultAsync(a => a.Name == areaData.AreaName && a.ParentAreaId == parentId);
+
+        if (existing != null)
+            return existing;
+
+        var area = new Area
+        {
+            Name = areaData.AreaName,
+            State = "TX", //TODO: Make this dynamic based on query
+            Country = "United States",
+            Lat = areaData.Metadata?.Lat,
+            Lng = areaData.Metadata?.Lng,
+            ParentAreaId = parentId
+        };
+
+        _db.Areas.Add(area);
+        await _db.SaveChangesAsync();
+        return area;
+    }
+
+    private async Task ImportClimbs(List<ClimbData> climbs, int areaId, ImportResult result)
+    {
+        foreach (var climbData in climbs)
+        {
+            if (string.IsNullOrWhiteSpace(climbData.Name))
+                continue;
+
+            // Filter: only sport and boulder
+            var isSport = climbData.Type?.Sport ?? false;
+            var isBoulder = climbData.Type?.Bouldering ?? false;
+
+            if (!isSport && !isBoulder)
+                continue;
+
+            // Check if already exists
+            var exists = await _db.Climbs.AnyAsync(c =>
+                c.Source == "OpenBeta" && c.SourceId == climbData.Uuid);
+
+            if (exists)
+            {
+                result.ClimbsSkipped++;
+                continue;
+            }
+
+            string climbType = isSport ? "Sport" : "Boulder";
+
+            var climb = new Climb
+            {
+                AreaId = areaId,
+                Name = climbData.Name,
+                Type = climbType,
+                Yds = climbData.Grades?.Yds,
+                Description = climbData.Content?.Description,
+                Lat = climbData.Metadata?.Lat,
+                Lng = climbData.Metadata?.Lng,
+                Source = "OpenBeta",
+                SourceId = climbData.Uuid
+            };
+
+            _db.Climbs.Add(climb);
+            result.ClimbsImported++;
+        }
+
+        await _db.SaveChangesAsync();
+    }
+
+    // Keep the old Texas-specific method for backwards compatibility
+    public async Task<ImportResult> ImportTexasRoutes()
+    {
+        return await ImportAreaByName("Texas");
     }
 }
 
-// DTOs for OpenBeta GraphQL response
+// DTOs
 public class OpenBetaResponse
 {
     public List<AreaData> Areas { get; set; } = new();
@@ -173,13 +229,16 @@ public class AreaData
 {
     [JsonProperty("area_name")]
     public string AreaName { get; set; } = null!;
-    
+
     [JsonProperty("uuid")]
     public string Uuid { get; set; } = null!;
-    
+
     [JsonProperty("metadata")]
     public AreaMetadata? Metadata { get; set; }
-    
+
+    [JsonProperty("children")]
+    public List<AreaData> Children { get; set; } = new();
+
     [JsonProperty("climbs")]
     public List<ClimbData> Climbs { get; set; } = new();
 }
@@ -230,6 +289,6 @@ public class ImportResult
     public int ClimbsImported { get; set; }
     public int ClimbsSkipped { get; set; }
     public List<string> Errors { get; set; } = new();
-    
+
     public bool Success => !Errors.Any();
 }

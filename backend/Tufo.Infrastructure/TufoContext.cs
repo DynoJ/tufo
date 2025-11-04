@@ -18,7 +18,18 @@ public class TufoContext : IdentityDbContext<AppUser>
     {
         base.OnModelCreating(b);
 
-        b.Entity<Area>(e => e.Property(x => x.Name).IsRequired().HasMaxLength(160));
+        b.Entity<Area>(e =>
+        {
+            e.Property(x => x.Name).IsRequired().HasMaxLength(160);
+            
+            // Self-referencing relationship for hierarchy
+            e.HasOne(x => x.ParentArea)
+             .WithMany(x => x.SubAreas)
+             .HasForeignKey(x => x.ParentAreaId)
+             .OnDelete(DeleteBehavior.Restrict);
+            
+            e.HasIndex(x => x.ParentAreaId);
+        });
 
         b.Entity<Climb>(e =>
         {

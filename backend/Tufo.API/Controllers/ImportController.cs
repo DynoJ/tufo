@@ -35,4 +35,40 @@ public class ImportController : ControllerBase
             result.ClimbsSkipped
         });
     }
+
+    /// <summary>
+    /// Import a specific climbing area by name (e.g., "Barton Creek Greenbelt")
+    /// This will import the location with its hierarchical structure:
+    /// Location -> Sub-Areas -> Walls -> Climbs
+    /// </summary>
+    [HttpPost("search")]
+    public async Task<ActionResult> ImportBySearch([FromBody] SearchImportRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.AreaName))
+            return BadRequest("Area name is required");
+
+        var result = await _importer.ImportAreaByName(request.AreaName);
+
+        if (!result.Success)
+            return BadRequest(new
+            {
+                success = false,
+                errors = result.Errors
+            });
+
+        return Ok(new
+        {
+            success = true,
+            message = $"Imported {result.ClimbsImported} climbs across {result.AreasImported} areas. Skipped {result.ClimbsSkipped} duplicates.",
+            areasImported = result.AreasImported,
+            climbsImported = result.ClimbsImported,
+            climbsSkipped = result.ClimbsSkipped,
+            errors = result.Errors
+        });
+    }
+}
+
+public class SearchImportRequest
+{
+    public string AreaName { get; set; } = null!;
 }
