@@ -1,0 +1,233 @@
+.area-browser {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.browser-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #666;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #2196f3;
+    color: #2196f3;
+  }
+}
+
+.area-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #333;
+}
+
+// Breadcrumbs
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding: 0.75rem 1rem;
+  background: #f5f5f5;
+  border-radius: 6px;
+  flex-wrap: wrap;
+}
+
+.breadcrumb-item {
+  background: none;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9rem;
+  color: #2196f3;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.2s;
+
+  &:hover {
+    background: rgba(33, 150, 243, 0.1);
+  }
+
+  &.active {
+    color: #666;
+    cursor: default;
+    font-weight: 600;
+
+    &:hover {
+      background: none;
+    }
+  }
+}
+
+.breadcrumb-separator {
+  color: #999;
+}
+
+// Loading
+.loading {
+  text-align: center;
+  padding: 4rem 1rem;
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 1rem;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #2196f3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  p {
+    color: #666;
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Error
+.error-message {
+  text-align: center;
+  padding: 2rem;
+  background: #ffebee;
+  border-radius: 8px;
+  color: #c62828;
+
+  button {
+    margin-top: 1rem;
+    padding: 0.5rem 1.5rem;
+    background: #c62828;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+
+    &:hover {
+      background: #b71c1c;
+    }
+  }
+}
+
+// Sections
+.areas-section,
+.climbs-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.areas-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+// Climbs List
+.climbs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.climb-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: #2196f3;
+    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+  }
+}
+
+.climb-info {
+  flex: 1;
+}
+
+.climb-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.climb-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+
+.climb-type {
+  padding: 0.25rem 0.75rem;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.climb-grade {
+  padding: 0.25rem 0.75rem;
+  background: #f3e5f5;
+  color: #7b1fa2;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.climb-arrow {
+  color: #2196f3;
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  color: #666;
+  
+  p {
+    font-size: 1.125rem;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .area-browser {
+    padding: 1rem 0.5rem;
+  }
+
+  .area-title {
+    font-size: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+  }
+}

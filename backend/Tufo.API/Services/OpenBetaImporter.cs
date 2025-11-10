@@ -34,12 +34,52 @@ public class OpenBetaImporter
                             lat
                             lng
                         }
+                        climbs {
+                            name
+                            uuid
+                            type {
+                                trad
+                                sport
+                                bouldering
+                                tr
+                            }
+                            grades {
+                                yds
+                            }
+                            metadata {
+                                lat
+                                lng
+                            }
+                            content {
+                                description
+                            }
+                        }
                         children {
                             area_name
                             uuid
                             metadata {
                                 lat
                                 lng
+                            }
+                            climbs {
+                                name
+                                uuid
+                                type {
+                                    trad
+                                    sport
+                                    bouldering
+                                    tr
+                                }
+                                grades {
+                                    yds
+                                }
+                                metadata {
+                                    lat
+                                    lng
+                                }
+                                content {
+                                    description
+                                }
                             }
                             children {
                                 area_name
@@ -68,6 +108,62 @@ public class OpenBetaImporter
                                         description
                                     }
                                 }
+                                children {
+                                    area_name
+                                    uuid
+                                    metadata {
+                                        lat
+                                        lng
+                                    }
+                                    climbs {
+                                        name
+                                        uuid
+                                        type {
+                                            trad
+                                            sport
+                                            bouldering
+                                            tr
+                                        }
+                                        grades {
+                                            yds
+                                        }
+                                        metadata {
+                                            lat
+                                            lng
+                                        }
+                                        content {
+                                            description
+                                        }
+                                    }
+                                    children {
+                                        area_name
+                                        uuid
+                                        metadata {
+                                            lat
+                                            lng
+                                        }
+                                        climbs {
+                                            name
+                                            uuid
+                                            type {
+                                                trad
+                                                sport
+                                                bouldering
+                                                tr
+                                            }
+                                            grades {
+                                                yds
+                                            }
+                                            metadata {
+                                                lat
+                                                lng
+                                            }
+                                            content {
+                                                description
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -93,43 +189,27 @@ public class OpenBetaImporter
                 if (string.IsNullOrWhiteSpace(topLevelData.AreaName))
                     continue;
 
-                // Create or get top-level area (e.g., "Barton Creek Greenbelt")
+                // Skip if this entire area tree has no climbs
+                if (!HasClimbsInTree(topLevelData))
+                {
+                    Console.WriteLine($"Skipping empty top-level area: {topLevelData.AreaName}");
+                    continue;
+                }
+
                 var topLevel = await GetOrCreateArea(topLevelData, null);
                 if (topLevel != null)
                 {
                     result.AreasImported++;
                     Console.WriteLine($"Top-level area: {topLevel.Name}");
-
-                    // Process sub-areas (e.g., "Gus Fruh", "Maggie's Wall")
-                    foreach (var subAreaData in topLevelData.Children)
+                    
+                    // Import climbs at top level
+                    if (topLevelData.Climbs.Any())
                     {
-                        if (string.IsNullOrWhiteSpace(subAreaData.AreaName))
-                            continue;
-
-                        var subArea = await GetOrCreateArea(subAreaData, topLevel.Id);
-                        if (subArea != null)
-                        {
-                            result.AreasImported++;
-                            Console.WriteLine($"  Sub-area: {subArea.Name}");
-
-                            // Process walls (e.g., "Main Wall", "North Face")
-                            foreach (var wallData in subAreaData.Children)
-                            {
-                                if (string.IsNullOrWhiteSpace(wallData.AreaName))
-                                    continue;
-
-                                var wall = await GetOrCreateArea(wallData, subArea.Id);
-                                if (wall != null)
-                                {
-                                    result.AreasImported++;
-                                    Console.WriteLine($"    Wall: {wall.Name} with {wallData.Climbs.Count} climbs");
-
-                                    // Import climbs on this wall
-                                    await ImportClimbs(wallData.Climbs, wall.Id, result);
-                                }
-                            }
-                        }
+                        await ImportClimbs(topLevelData.Climbs, topLevel.Id, result);
                     }
+
+                    // Recursively process all children
+                    await ProcessAreaChildren(topLevelData.Children, topLevel.Id, result);
                 }
             }
 
@@ -139,6 +219,60 @@ public class OpenBetaImporter
         {
             result.Errors.Add($"Import failed: {ex.Message}");
             return result;
+        }
+    }
+
+    /// <summary>
+    /// Recursively check if this area or any of its descendants have climbs
+    /// </summary>
+    private bool HasClimbsInTree(AreaData area)
+    {
+        // Check if this area has climbs
+        if (area.Climbs.Any())
+            return true;
+
+        // Recursively check all children
+        foreach (var child in area.Children)
+        {
+            if (HasClimbsInTree(child))
+                return true;
+        }
+
+        return false;
+    }
+
+    private async Task ProcessAreaChildren(List<AreaData> children, int parentId, ImportResult result)
+    {
+        foreach (var childData in children)
+        {
+            if (string.IsNullOrWhiteSpace(childData.AreaName))
+                continue;
+
+            // Skip if this entire area tree has no climbs
+            if (!HasClimbsInTree(childData))
+            {
+                Console.WriteLine($"  Skipping empty area: {childData.AreaName}");
+                continue;
+            }
+
+            var childArea = await GetOrCreateArea(childData, parentId);
+            if (childArea != null)
+            {
+                result.AreasImported++;
+                Console.WriteLine($"  Area: {childArea.Name} - {childData.Climbs.Count} climbs");
+
+                // Import climbs at this level
+                if (childData.Climbs.Any())
+                {
+                    await ImportClimbs(childData.Climbs, childArea.Id, result);
+                }
+
+                // Recursively process children
+                if (childData.Children.Any())
+                {
+                    await ProcessAreaChildren(childData.Children, childArea.Id, result);
+                }
+            }
         }
     }
 

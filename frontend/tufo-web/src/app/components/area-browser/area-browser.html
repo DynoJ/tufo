@@ -1,0 +1,85 @@
+<div class="area-browser">
+  <!-- Header with back button -->
+  <div class="browser-header">
+    <button 
+      *ngIf="currentArea && currentArea.id !== 0" 
+      class="back-button"
+      (click)="goBack()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Back
+    </button>
+    <h1 class="area-title">{{ currentArea?.name || 'Areas' }}</h1>
+  </div>
+
+  <!-- Breadcrumbs -->
+  <nav class="breadcrumbs" *ngIf="breadcrumbs.length > 0">
+    <button class="breadcrumb-item" (click)="onBreadcrumbClick(0)">
+      All Locations
+    </button>
+    <span class="breadcrumb-separator">/</span>
+    <button 
+      *ngFor="let crumb of breadcrumbs; let last = last"
+      class="breadcrumb-item"
+      [class.active]="last"
+      (click)="onBreadcrumbClick(crumb.id)">
+      {{ crumb.name }}
+    </button>
+  </nav>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error" class="error-message">
+    <p>{{ error }}</p>
+    <button (click)="loadTopLevelAreas()">Try Again</button>
+  </div>
+
+  <!-- Sub-Areas Section -->
+  <div *ngIf="!loading && !error && currentArea && currentArea.subAreas.length > 0" class="areas-section">
+    <h2 class="section-title">
+      {{ currentArea.climbs.length > 0 ? 'Walls' : 'Areas' }}
+    </h2>
+    <div class="areas-grid">
+      <app-area-card 
+        *ngFor="let area of currentArea.subAreas"
+        [area]="area"
+        (areaClick)="onAreaClick($event)">
+      </app-area-card>
+    </div>
+  </div>
+
+  <!-- Climbs Section -->
+  <div *ngIf="!loading && !error && currentArea && currentArea.climbs.length > 0" class="climbs-section">
+    <h2 class="section-title">Routes</h2>
+    <div class="climbs-list">
+      <div 
+        *ngFor="let climb of currentArea.climbs"
+        class="climb-item"
+        (click)="onClimbClick(climb.id)">
+        <div class="climb-info">
+          <h3 class="climb-name">{{ climb.name }}</h3>
+          <div class="climb-meta">
+            <span class="climb-type">{{ climb.type }}</span>
+            <span *ngIf="climb.yds" class="climb-grade">{{ climb.yds }}</span>
+          </div>
+        </div>
+        <div class="climb-arrow">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && !error && currentArea && currentArea.subAreas.length === 0 && currentArea.climbs.length === 0" class="empty-state">
+    <p>No areas or routes found here.</p>
+  </div>
+</div>

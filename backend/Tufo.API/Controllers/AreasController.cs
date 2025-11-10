@@ -13,17 +13,36 @@ public class AreasController : ControllerBase
     public AreasController(TufoContext db) => _db = db;
 
     /// <summary>
-    /// Get all top-level areas (no parent)
+    /// Get all top-level areas (no parent) with climb counts
     /// </summary>
     [HttpGet]
-    public Task<List<Area>> GetTopLevel() =>
-        _db.Areas
+    public async Task<ActionResult<List<AreaSummaryDto>>> GetTopLevel()
+    {
+        var areas = await _db.Areas
             .Where(a => a.ParentAreaId == null)
             .AsNoTracking()
             .ToListAsync();
 
+        var result = new List<AreaSummaryDto>();
+        
+        foreach (var area in areas)
+        {
+            // Count all climbs in this area and all sub-areas recursively
+            var climbCount = await GetTotalClimbCount(area.Id);
+            
+            result.Add(new AreaSummaryDto
+            {
+                Id = area.Id,
+                Name = area.Name,
+                ClimbCount = climbCount
+            });
+        }
+
+        return result;
+    }
+
     /// <summary>
-    /// Get area with its sub-areas
+    /// Get area with its sub-areas and climbs
     /// </summary>
     [HttpGet("{id:int}")]
     public async Task<ActionResult<AreaDetailDto>> GetOne(int id)
@@ -37,6 +56,18 @@ public class AreasController : ControllerBase
         if (area == null)
             return NotFound();
 
+        var subAreaDtos = new List<AreaSummaryDto>();
+        foreach (var subArea in area.SubAreas)
+        {
+            var climbCount = await GetTotalClimbCount(subArea.Id);
+            subAreaDtos.Add(new AreaSummaryDto
+            {
+                Id = subArea.Id,
+                Name = subArea.Name,
+                ClimbCount = climbCount
+            });
+        }
+
         return Ok(new AreaDetailDto
         {
             Id = area.Id,
@@ -45,12 +76,7 @@ public class AreasController : ControllerBase
             Lat = area.Lat,
             Lng = area.Lng,
             ParentAreaId = area.ParentAreaId,
-            SubAreas = area.SubAreas.Select(s => new AreaSummaryDto
-            {
-                Id = s.Id,
-                Name = s.Name,
-                ClimbCount = _db.Climbs.Count(c => c.AreaId == s.Id)
-            }).ToList(),
+            SubAreas = subAreaDtos,
             Climbs = area.Climbs.Select(c => new ClimbSummaryDto
             {
                 Id = c.Id,
@@ -59,6 +85,30 @@ public class AreasController : ControllerBase
                 Yds = c.Yds
             }).ToList()
         });
+    }
+
+    /// <summary>
+    /// Recursively count all climbs in an area and its sub-areas
+    /// </summary>
+    private async Task<int> GetTotalClimbCount(int areaId)
+    {
+        // Count climbs directly on this area
+        var directClimbCount = await _db.Climbs.CountAsync(c => c.AreaId == areaId);
+
+        // Get all sub-areas
+        var subAreaIds = await _db.Areas
+            .Where(a => a.ParentAreaId == areaId)
+            .Select(a => a.Id)
+            .ToListAsync();
+
+        // Recursively count climbs in sub-areas
+        var subAreaClimbCount = 0;
+        foreach (var subAreaId in subAreaIds)
+        {
+            subAreaClimbCount += await GetTotalClimbCount(subAreaId);
+        }
+
+        return directClimbCount + subAreaClimbCount;
     }
 
     /// <summary>

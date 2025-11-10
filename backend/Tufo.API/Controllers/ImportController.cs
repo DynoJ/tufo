@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Tufo.API.Services;
+using Tufo.Infrastructure;
 
 namespace Tufo.API.Controllers;
 
@@ -9,10 +11,12 @@ namespace Tufo.API.Controllers;
 public class ImportController : ControllerBase
 {
     private readonly OpenBetaImporter _importer;
+    private readonly TufoContext _db;
 
-    public ImportController(OpenBetaImporter importer)
+    public ImportController(OpenBetaImporter importer, TufoContext db)
     {
         _importer = importer;
+        _db = db;
     }
 
     /// <summary>
@@ -65,6 +69,83 @@ public class ImportController : ControllerBase
             climbsSkipped = result.ClimbsSkipped,
             errors = result.Errors
         });
+    }
+
+    /// <summary>
+    /// Delete an area and all its children/climbs by name
+    /// </summary>
+    [HttpDelete("area/{areaName}")]
+    public async Task<ActionResult> DeleteArea(string areaName)
+    {
+        var area = await _db.Areas
+            .Include(a => a.Climbs)
+            .FirstOrDefaultAsync(a => a.Name == areaName && a.ParentAreaId == null);
+        
+        if (area == null)
+            return NotFound($"Area '{areaName}' not found");
+
+        // Delete all climbs first
+        _db.Climbs.RemoveRange(area.Climbs);
+        
+        // Delete child areas recursively
+        await DeleteChildAreas(area.Id);
+        
+        // Delete the area itself
+        _db.Areas.Remove(area);
+        
+        await _db.SaveChangesAsync();
+        
+        return Ok(new { 
+            success = true,
+            message = $"Deleted area '{areaName}' and all its children" 
+        });
+    }
+
+    /// <summary>
+    /// Delete ALL areas and climbs - use with caution!
+    /// </summary>
+    [HttpDelete("reset")]
+    public async Task<ActionResult> ResetDatabase()
+    {
+        try
+        {
+            // Delete all climbs first (foreign key constraint)
+            var allClimbs = await _db.Climbs.ToListAsync();
+            _db.Climbs.RemoveRange(allClimbs);
+            
+            // Delete all areas
+            var allAreas = await _db.Areas.ToListAsync();
+            _db.Areas.RemoveRange(allAreas);
+            
+            await _db.SaveChangesAsync();
+            
+            return Ok(new { 
+                success = true,
+                message = $"Database reset complete. Deleted {allClimbs.Count} climbs and {allAreas.Count} areas." 
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { 
+                success = false,
+                message = $"Reset failed: {ex.Message}" 
+            });
+        }
+    }
+
+    private async Task DeleteChildAreas(int parentId)
+    {
+        var children = await _db.Areas
+            .Include(a => a.Climbs)
+            .Where(a => a.ParentAreaId == parentId)
+            .ToListAsync();
+        
+        foreach (var child in children)
+        {
+            _db.Climbs.RemoveRange(child.Climbs);
+            await DeleteChildAreas(child.Id);
+            _db.Areas.Remove(child);
+        }
     }
 }
 
