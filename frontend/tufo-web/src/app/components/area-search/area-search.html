@@ -5,36 +5,41 @@
       Search for a climbing area to import routes (e.g., "Barton Creek Greenbelt", "Reimers Ranch", "Enchanted Rock")
     </p>
     
-    <form (ngSubmit)="onSearch()" class="search-form">
-      <div class="search-input-wrapper">
-        <input
-          type="text"
-          [(ngModel)]="searchQuery"
-          name="search"
-          placeholder="Enter location name..."
-          class="search-input"
-          [disabled]="importing"
-        />
-        <button 
-          type="submit" 
-          class="search-button"
-          [disabled]="importing || !searchQuery.trim()">
-          <span *ngIf="!importing">Import</span>
+    <div class="search-form">
+      <input
+        type="text"
+        [(ngModel)]="searchQuery"
+        name="search"
+        placeholder="Enter location name..."
+        class="search-input"
+        [disabled]="importing"
+        (input)="onSearchInput()"
+      />
+    </div>
+
+    <!-- Google Maps Embed -->
+    <div *ngIf="showMap" class="map-container">
+      <iframe 
+        [src]="mapUrl" 
+        class="map"
+        frameborder="0" 
+        allowfullscreen>
+      </iframe>
+      <div class="map-actions">
+        <button (click)="getDirections()" class="directions-button">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Get Directions
+        </button>
+        <button (click)="onImport()" class="import-button" [disabled]="importing">
+          <span *ngIf="!importing">Import Location</span>
           <span *ngIf="importing">Importing...</span>
         </button>
       </div>
-    </form>
-
-    <!-- Success Message -->
-    <div *ngIf="importSuccess" class="success-message">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-      </svg>
-      <p>{{ importMessage }}</p>
     </div>
 
-    <!-- Error Message -->
     <div *ngIf="error" class="error-message">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"></circle>
@@ -42,57 +47,6 @@
         <line x1="12" y1="16" x2="12.01" y2="16"></line>
       </svg>
       <p>{{ error }}</p>
-    </div>
-
-    <!-- Examples -->
-    <div class="examples">
-      <h3>Popular Texas Locations:</h3>
-      <div class="example-buttons">
-        <button 
-          *ngFor="let example of ['Barton Creek Greenbelt', 'Reimers Ranch', 'Enchanted Rock']"
-          (click)="searchQuery = example; onSearch()"
-          [disabled]="importing"
-          class="example-button">
-          {{ example }}
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Delete Section -->
-  <div class="search-container delete-container">
-    <h2>Delete a Climbing Location</h2>
-    <p class="search-description">
-      Delete an area and all its sub-areas and climbs (e.g., "Enchanted Rock", "Texas Wall / West Velvet Wall")
-    </p>
-    
-    <form (ngSubmit)="onDelete()" class="search-form">
-      <div class="search-input-wrapper">
-        <input
-          type="text"
-          [(ngModel)]="deleteQuery"
-          name="delete"
-          placeholder="Enter area name to delete..."
-          class="search-input"
-          [disabled]="deleting"
-        />
-        <button 
-          type="submit" 
-          class="search-button delete-button"
-          [disabled]="deleting || !deleteQuery.trim()">
-          <span *ngIf="!deleting">Delete</span>
-          <span *ngIf="deleting">Deleting...</span>
-        </button>
-      </div>
-    </form>
-
-    <!-- Delete Success Message -->
-    <div *ngIf="deleteSuccess" class="success-message">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-        <polyline points="22 4 12 14.01 9 11.01"></polyline>
-      </svg>
-      <p>{{ deleteMessage }}</p>
     </div>
   </div>
 </div>

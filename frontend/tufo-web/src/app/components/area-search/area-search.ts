@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AreasService } from '../../services/areas.service';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-area-search',
@@ -13,27 +14,64 @@ import { AreasService } from '../../services/areas.service';
 })
 export class AreaSearchComponent {
   searchQuery = '';
-  deleteQuery = '';
   importing = false;
-  deleting = false;
-  importSuccess = false;
-  deleteSuccess = false;
-  importMessage = '';
-  deleteMessage = '';
   error = '';
+  
+  showMap = false;
+  selectedLocation: { name: string; lat: number; lng: number } | null = null;
+  mapUrl: SafeResourceUrl | null = null;
 
   constructor(
     private areasService: AreasService,
-    private router: Router
+    private router: Router,
+    private sanitizer: DomSanitizer
   ) {}
 
-  onSearch(): void {
-    if (!this.searchQuery.trim()) {
+  onSearchInput(): void {
+    const query = this.searchQuery.trim().toLowerCase();
+    
+    if (!query) {
+      this.showMap = false;
       return;
     }
 
+    const locations: { [key: string]: { lat: number; lng: number } } = {
+      'barton creek greenbelt': { lat: 30.2505, lng: -97.7998 },
+      'reimers ranch': { lat: 30.3532, lng: -98.1242 },
+      'enchanted rock': { lat: 30.5047, lng: -98.8167 },
+      'hueco tanks': { lat: 31.9219, lng: -106.0453 }
+    };
+
+    const match = Object.keys(locations).find(key => key.includes(query));
+    
+    if (match) {
+      const coords = locations[match];
+      this.selectedLocation = { 
+        name: match.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        ...coords
+      };
+      
+      const embedUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=${coords.lat},${coords.lng}&zoom=13`;
+      this.mapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
+      this.showMap = true;
+    } else {
+      this.showMap = false;
+    }
+  }
+
+  getDirections(): void {
+    if (this.selectedLocation) {
+      window.open(
+        `https://www.google.com/maps/dir/?api=1&destination=${this.selectedLocation.lat},${this.selectedLocation.lng}`,
+        '_blank'
+      );
+    }
+  }
+
+  onImport(): void {
+    if (!this.searchQuery.trim()) return;
+
     this.importing = true;
-    this.importSuccess = false;
     this.error = '';
 
     const searchTerm = this.searchQuery.trim();
@@ -41,67 +79,19 @@ export class AreaSearchComponent {
     this.areasService.importLocation(searchTerm).subscribe({
       next: (result) => {
         this.importing = false;
-        this.importSuccess = true;
-        this.importMessage = result.message;
         
-        // After import, search for the area we just imported to get its ID
-        setTimeout(() => {
-          this.areasService.searchAreas(searchTerm).subscribe({
-            next: (areas) => {
-              if (areas && areas.length > 0) {
-                // Navigate to the first matching area
-                this.router.navigate(['/areas', areas[0].id]);
-              } else {
-                // Fallback to all areas if search doesn't find it
-                this.router.navigate(['/areas']);
-              }
-              this.importSuccess = false;
-              this.searchQuery = '';
-            },
-            error: () => {
-              // Fallback to all areas if search fails
-              this.router.navigate(['/areas']);
-              this.importSuccess = false;
-              this.searchQuery = '';
-            }
-          });
-        }, 1500);
+        this.areasService.searchAreas(searchTerm).subscribe({
+          next: (areas) => {
+            this.router.navigate(areas?.length > 0 ? ['/areas', areas[0].id] : ['/areas']);
+          },
+          error: () => {
+            this.router.navigate(['/areas']);
+          }
+        });
       },
       error: (err) => {
         this.importing = false;
-        this.error = err.error?.message || 'Failed to import location. Please try again.';
-        console.error(err);
-      }
-    });
-  }
-
-  onDelete(): void {
-    if (!this.deleteQuery.trim()) {
-      return;
-    }
-
-    this.deleting = true;
-    this.deleteSuccess = false;
-    this.error = '';
-
-    const areaName = this.deleteQuery.trim();
-
-    this.areasService.deleteArea(areaName).subscribe({
-      next: (result) => {
-        this.deleting = false;
-        this.deleteSuccess = true;
-        this.deleteMessage = result.message;
-        this.deleteQuery = '';
-        
-        // Clear success message after 3 seconds
-        setTimeout(() => {
-          this.deleteSuccess = false;
-        }, 3000);
-      },
-      error: (err) => {
-        this.deleting = false;
-        this.error = err.error?.message || 'Failed to delete area. Please try again.';
-        console.error(err);
+        this.error = err.error?.message || 'Failed to import location.';
       }
     });
   }
