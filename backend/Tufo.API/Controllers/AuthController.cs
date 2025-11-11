@@ -6,6 +6,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Tufo.Infrastructure.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tufo.API.Controllers
 {
@@ -33,7 +34,7 @@ namespace Tufo.API.Controllers
             if (await _users.FindByNameAsync(dto.UserName) is not null)
                 return BadRequest("Username already exists");
 
-            // optional: enforce unique email here if you didn’t set it in Identity options
+            // optional: enforce unique email here if you didn't set it in Identity options
             var existingByEmail = await _users.FindByEmailAsync(dto.Email);
             if (existingByEmail is not null)
                 return BadRequest("Email already in use");
@@ -64,6 +65,24 @@ namespace Tufo.API.Controllers
                 return Unauthorized("Invalid password");
 
             return Ok(new { token = MakeJwt(u) });
+        }
+
+        /// <summary>
+        /// DELETE ALL USERS - DEVELOPMENT ONLY - REMOVE AFTER USE
+        /// </summary>
+        [HttpDelete("reset-users")]
+        public async Task<IActionResult> ResetUsers()
+        {
+            var users = await _users.Users.ToListAsync();
+            foreach (var user in users)
+            {
+                await _users.DeleteAsync(user);
+            }
+            
+            return Ok(new { 
+                success = true, 
+                message = $"Deleted {users.Count} users" 
+            });
         }
 
         private string MakeJwt(AppUser u)

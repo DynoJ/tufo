@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Tufo.API.Services;
 using Tufo.Infrastructure;
+using Tufo.API.Models;
 
 namespace Tufo.API.Controllers;
 
@@ -20,23 +21,28 @@ public class ImportController : ControllerBase
     }
 
     /// <summary>
-    /// Import Texas sport and boulder routes from OpenBeta
+    /// Import ALL 50 US states (sport + boulder only)
     /// </summary>
-    [HttpPost("texas")]
-    public async Task<ActionResult<ImportResult>> ImportTexas()
+    [HttpPost("all-states")]
+    public async Task<ActionResult> ImportAllStates()
     {
-        var result = await _importer.ImportTexasRoutes();
+        var result = await _importer.ImportAllUSStates();
 
         if (!result.Success)
-            return BadRequest(result);
+            return BadRequest(new
+            {
+                success = false,
+                message = result.Message,
+                errors = result.Errors
+            });
 
         return Ok(new
         {
             success = true,
-            message = $"Imported {result.ClimbsImported} climbs across {result.AreasImported} areas. Skipped {result.ClimbsSkipped} duplicates.",
-            result.AreasImported,
-            result.ClimbsImported,
-            result.ClimbsSkipped
+            message = result.Message,
+            areasImported = result.AreasImported,
+            climbsImported = result.ClimbsImported,
+            errors = result.Errors
         });
     }
 
@@ -70,6 +76,84 @@ public class ImportController : ControllerBase
             errors = result.Errors
         });
     }
+
+ /// <summary>
+/// Fix duplicate state names (TX -> Texas, etc.)
+/// </summary>
+[HttpPost("fix-states")]
+public async Task<ActionResult> FixStateNames()
+{
+    var stateMapping = new Dictionary<string, string>
+    {
+        ["TX"] = "Texas",
+        ["CA"] = "California",
+        ["NY"] = "New York",
+        ["FL"] = "Florida",
+        ["CO"] = "Colorado",
+        ["WA"] = "Washington",
+        ["OR"] = "Oregon",
+        ["UT"] = "Utah",
+        ["AZ"] = "Arizona",
+        ["NV"] = "Nevada",
+        ["NM"] = "New Mexico",
+        ["WY"] = "Wyoming",
+        ["MT"] = "Montana",
+        ["ID"] = "Idaho",
+        ["NC"] = "North Carolina",
+        ["SC"] = "South Carolina",
+        ["GA"] = "Georgia",
+        ["AL"] = "Alabama",
+        ["TN"] = "Tennessee",
+        ["KY"] = "Kentucky",
+        ["VA"] = "Virginia",
+        ["WV"] = "West Virginia",
+        ["OH"] = "Ohio",
+        ["IN"] = "Indiana",
+        ["IL"] = "Illinois",
+        ["MI"] = "Michigan",
+        ["WI"] = "Wisconsin",
+        ["MN"] = "Minnesota",
+        ["IA"] = "Iowa",
+        ["MO"] = "Missouri",
+        ["AR"] = "Arkansas",
+        ["LA"] = "Louisiana",
+        ["MS"] = "Mississippi",
+        ["OK"] = "Oklahoma",
+        ["KS"] = "Kansas",
+        ["NE"] = "Nebraska",
+        ["SD"] = "South Dakota",
+        ["ND"] = "North Dakota",
+        ["PA"] = "Pennsylvania",
+        ["NJ"] = "New Jersey",
+        ["DE"] = "Delaware",
+        ["MD"] = "Maryland",
+        ["MA"] = "Massachusetts",
+        ["CT"] = "Connecticut",
+        ["RI"] = "Rhode Island",
+        ["VT"] = "Vermont",
+        ["NH"] = "New Hampshire",
+        ["ME"] = "Maine",
+        ["AK"] = "Alaska",
+        ["HI"] = "Hawaii"
+    };
+
+    var fixedCount = 0;
+    
+    foreach (var kvp in stateMapping)
+    {
+        var areas = await _db.Areas.Where(a => a.State == kvp.Key).ToListAsync();
+        
+        foreach (var area in areas)
+        {
+            area.State = kvp.Value;
+            fixedCount++;
+        }
+    }
+    
+    await _db.SaveChangesAsync();
+    
+    return Ok(new { success = true, message = $"Fixed {fixedCount} areas", statesFixed = stateMapping.Count });
+}
 
     /// <summary>
     /// Delete an area and all its children/climbs by name

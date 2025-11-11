@@ -19,11 +19,26 @@ export interface SubArea {
   climbCount: number;
 }
 
+export interface StateSummary {
+  state: string;
+  areaCount: number;
+  climbCount: number;
+}
+
 export interface ClimbSummary {
   id: number;
   name: string;
   type: string;
   yds?: string;
+}
+
+export interface SearchResult {
+  id: number;
+  name: string;
+  type: 'area' | 'climb';
+  location?: string;
+  grade?: string;
+  climbCount?: number;
 }
 
 export interface SearchImportRequest {
@@ -51,6 +66,20 @@ export class AreasService {
   private apiUrl = 'http://localhost:5038/api';
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * Get all states with their area and climb counts
+   */
+  getStates(): Observable<StateSummary[]> {
+    return this.http.get<StateSummary[]>(`${this.apiUrl}/Areas/by-state`);
+  }
+
+  /**
+   * Get top-level areas for a specific state
+   */
+  getAreasInState(state: string): Observable<SubArea[]> {
+    return this.http.get<SubArea[]>(`${this.apiUrl}/Areas/by-state/${encodeURIComponent(state)}`);
+  }
 
   /**
    * Get all top-level areas (no parent) with climb counts
@@ -85,5 +114,19 @@ export class AreasService {
    */
   deleteArea(areaName: string): Observable<DeleteResult> {
     return this.http.delete<DeleteResult>(`${this.apiUrl}/Import/area/${encodeURIComponent(areaName)}`);
+  }
+
+  /**
+   * Universal search - searches both areas and climbs
+   */
+  search(query: string): Observable<SearchResult[]> {
+    return this.http.get<SearchResult[]>(`${this.apiUrl}/Search?q=${encodeURIComponent(query)}`);
+  }
+
+  /**
+   * Get climbing areas near a location
+   */
+  getNearbyAreas(lat: number, lng: number, radius: number = 50): Observable<Area[]> {
+    return this.http.get<Area[]>(`${this.apiUrl}/Areas/nearby?lat=${lat}&lng=${lng}&radius=${radius}`);
   }
 }

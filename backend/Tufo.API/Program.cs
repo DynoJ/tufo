@@ -19,8 +19,13 @@ builder.Services.AddDbContext<TufoContext>(opt =>
 builder.Services.AddIdentityCore<AppUser>()
     .AddEntityFrameworkStores<TufoContext>();
 
-// OpenBeta Importer Service ← ADD THIS
-builder.Services.AddScoped<OpenBetaImporter>();
+// OpenBeta Importer Service
+builder.Services.AddHttpClient<OpenBetaImporter>(c =>
+{
+    c.BaseAddress = new Uri("https://api.openbeta.io/");
+    c.Timeout = TimeSpan.FromSeconds(60);
+    c.DefaultRequestHeaders.Add("User-Agent", "Tufo-App");
+});
 
 // JWT
 var jwt = builder.Configuration.GetSection("Jwt");

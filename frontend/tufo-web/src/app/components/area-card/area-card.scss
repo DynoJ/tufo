@@ -1,18 +1,18 @@
 .area-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
   margin-bottom: 0.75rem;
   background: white;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
     border-color: #2196f3;
-    box-shadow: 0 2px 8px rgba(33, 150, 243, 0.15);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
     transform: translateX(4px);
   }
 
@@ -21,25 +21,145 @@
   }
 }
 
+// Visual Hierarchy - Different colors for different types
+.card-type-state {
+  border-left: 4px solid #10b981;
+  
+  &:hover {
+    border-color: #10b981;
+    background: #f0fdf4;
+  }
+}
+
+.card-type-area {
+  border-left: 4px solid #2196f3;
+  
+  &:hover {
+    border-color: #2196f3;
+    background: #f0f9ff;
+  }
+}
+
+.card-type-wall {
+  border-left: 4px solid #f59e0b;
+  
+  &:hover {
+    border-color: #f59e0b;
+    background: #fffbeb;
+  }
+}
+
+// Icon Styling
+.area-icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.icon-state {
+  background: #d1fae5;
+  color: #059669;
+  
+  .card-type-state:hover & {
+    background: #10b981;
+    color: white;
+  }
+}
+
+.icon-area {
+  background: #dbeafe;
+  color: #1d4ed8;
+  
+  .card-type-area:hover & {
+    background: #2196f3;
+    color: white;
+  }
+}
+
+.icon-wall {
+  background: #fef3c7;
+  color: #d97706;
+  
+  .card-type-wall:hover & {
+    background: #f59e0b;
+    color: white;
+  }
+}
+
+// Content
 .area-card-content {
   flex: 1;
+  min-width: 0; // Enables text truncation
 }
 
 .area-name {
-  margin: 0;
-  font-size: 1.125rem;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.0625rem;
   font-weight: 600;
-  color: #333;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .climb-count {
-  margin: 0.25rem 0 0 0;
+  margin: 0;
   font-size: 0.875rem;
-  color: #666;
-}
-
-.area-card-arrow {
-  color: #2196f3;
+  color: #64748b;
   display: flex;
   align-items: center;
+  gap: 0.25rem;
+}
+
+.count-number {
+  font-weight: 600;
+  color: #475569;
+}
+
+.count-label {
+  color: #94a3b8;
+}
+
+// Arrow
+.area-card-arrow {
+  flex-shrink: 0;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  
+  .area-card:hover & {
+    color: currentColor;
+    transform: translateX(4px);
+  }
+}
+
+// Responsive
+@media (max-width: 640px) {
+  .area-card {
+    padding: 0.875rem 1rem;
+  }
+  
+  .area-icon {
+    width: 40px;
+    height: 40px;
+    
+    svg {
+      width: 18px;
+      height: 18px;
+    }
+  }
+  
+  .area-name {
+    font-size: 1rem;
+  }
+  
+  .climb-count {
+    font-size: 0.8125rem;
+  }
 }

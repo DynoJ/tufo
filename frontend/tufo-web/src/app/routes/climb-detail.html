@@ -1,0 +1,211 @@
+<div *ngIf="!climb" class="loading-container">
+  <div class="spinner"></div>
+  <p>Loading route details...</p>
+</div>
+
+<div *ngIf="climb" class="climb-detail-wrap">
+  <!-- Hero Image Section -->
+  <div class="hero-section" *ngIf="climb.heroUrl">
+    <img [src]="climb.heroUrl" alt="{{climb.name}}" class="hero-image" />
+    <div class="hero-overlay">
+      <div class="climb-header-content">
+        <h1 class="climb-title">{{climb.name}}</h1>
+        <div class="climb-meta">
+          <span class="type-badge" [class]="'type-' + climb.type.toLowerCase()">{{climb.type}}</span>
+          <span class="grade-badge" *ngIf="climb.yds">{{climb.yds}}</span>
+        </div>
+      </div>
+    </div>
+    <small class="attribution" *ngIf="climb.heroAttribution">Photo: {{climb.heroAttribution}}</small>
+  </div>
+
+  <!-- No Hero Fallback -->
+  <div class="header-section" *ngIf="!climb.heroUrl">
+    <h1 class="climb-title">{{climb.name}}</h1>
+    <div class="climb-meta">
+      <span class="type-badge" [class]="'type-' + climb.type.toLowerCase()">{{climb.type}}</span>
+      <span class="grade-badge" *ngIf="climb.yds">{{climb.yds}}</span>
+    </div>
+  </div>
+
+  <!-- Location Breadcrumb -->
+  <div class="location-info" *ngIf="climb.area">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+      <circle cx="12" cy="10" r="3"></circle>
+    </svg>
+    <span class="location-text">
+      {{climb.area.name}}<span *ngIf="climb.area.state">, {{climb.area.state}}</span>
+    </span>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="content-grid">
+    <!-- Left Column: Description & Details -->
+    <div class="main-content">
+      <!-- Description -->
+      <section class="section" *ngIf="climb.description">
+        <h2 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Description
+        </h2>
+        <p class="description-text">{{climb.description}}</p>
+      </section>
+
+      <!-- Media Gallery -->
+      <section class="section">
+        <h2 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          Media
+          <span class="count-badge">{{climb.media.length}}</span>
+        </h2>
+        
+        <div class="media-grid" *ngIf="climb.media.length > 0">
+          <ng-container *ngFor="let m of climb.media">
+            <a [href]="m.url" target="_blank" *ngIf="!isVideo(m)" class="media-item">
+              <img [src]="m.url" [alt]="m.caption || 'photo'">
+              <div class="media-caption" *ngIf="m.caption">{{m.caption}}</div>
+            </a>
+            <a [href]="m.url" target="_blank" *ngIf="isVideo(m)" class="media-item">
+              <img [src]="m.thumbnailUrl || m.url" [alt]="m.caption || 'video'">
+              <span class="video-badge">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+              </span>
+              <div class="media-caption" *ngIf="m.caption">{{m.caption}}</div>
+            </a>
+          </ng-container>
+        </div>
+
+        <div class="empty-state" *ngIf="climb.media.length === 0">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <p>No photos yet. Be the first to share!</p>
+        </div>
+
+        <!-- Upload Form -->
+        <div class="upload-card">
+          <h3>Upload Photo</h3>
+          <div class="upload-form">
+            <input id="fileInput" type="file" accept="image/*" (change)="onFileChange($event)" class="file-input">
+            <label for="fileInput" class="file-label">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span *ngIf="!file">Choose file</span>
+              <span *ngIf="file">{{file.name}}</span>
+            </label>
+            <input 
+              type="text" 
+              class="caption-input" 
+              placeholder="Add a caption (optional)" 
+              [(ngModel)]="caption"
+              [disabled]="!file">
+            <button 
+              class="upload-button" 
+              (click)="upload()" 
+              [disabled]="uploading || !file">
+              <span *ngIf="!uploading">Upload</span>
+              <span *ngIf="uploading">Uploading...</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Notes Section -->
+      <section class="section">
+        <h2 class="section-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+          Beta & Notes
+          <span class="count-badge">{{climb.notes.length}}</span>
+        </h2>
+
+        <!-- Add Note Form -->
+        <div class="note-form-card">
+          <textarea 
+            class="note-textarea" 
+            rows="4" 
+            placeholder="Share beta, conditions, or your experience..."
+            [(ngModel)]="noteText"></textarea>
+          <button 
+            class="post-button" 
+            (click)="addNote()" 
+            [disabled]="posting || !noteText.trim()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            <span *ngIf="!posting">Post Note</span>
+            <span *ngIf="posting">Posting...</span>
+          </button>
+        </div>
+
+        <!-- Notes List -->
+        <div class="notes-list" *ngIf="climb.notes.length > 0">
+          <div class="note-card" *ngFor="let n of climb.notes">
+            <div class="note-avatar">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div class="note-content">
+              <div class="note-body">{{n.body}}</div>
+              <div class="note-time">{{n.createdAt | date:'MMM d, y \'at\' h:mm a'}}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="empty-state" *ngIf="climb.notes.length === 0">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+          </svg>
+          <p>No notes yet. Share your beta!</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Sidebar: Route Info -->
+    <aside class="sidebar">
+      <div class="info-card">
+        <h3>Route Info</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Type</span>
+            <span class="info-value">{{climb.type}}</span>
+          </div>
+          <div class="info-item" *ngIf="climb.yds">
+            <span class="info-label">Grade</span>
+            <span class="info-value">{{climb.yds}}</span>
+          </div>
+          <div class="info-item" *ngIf="climb.area">
+            <span class="info-label">Area</span>
+            <span class="info-value">{{climb.area.name}}</span>
+          </div>
+          <div class="info-item" *ngIf="climb.area?.state">
+            <span class="info-label">State</span>
+            <span class="info-value">{{climb.area?.state}}</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>

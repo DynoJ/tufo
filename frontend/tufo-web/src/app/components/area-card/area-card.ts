@@ -11,6 +11,7 @@ import { SubArea } from '../../services/areas.service';
 })
 export class AreaCardComponent {
   @Input() area!: SubArea;
+  @Input() cardType: 'state' | 'area' | 'wall' = 'area';
   @Output() areaClick = new EventEmitter<number>();
 
   onCardClick(): void {

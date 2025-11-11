@@ -13,6 +13,73 @@ public class AreasController : ControllerBase
     public AreasController(TufoContext db) => _db = db;
 
     /// <summary>
+    /// Get all states with their area and climb counts
+    /// </summary>
+    [HttpGet("by-state")]
+    public async Task<ActionResult<List<StateSummaryDto>>> GetByState()
+    {
+        var areas = await _db.Areas
+            .Where(a => a.ParentAreaId == null && a.State != null)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var stateGroups = areas
+            .GroupBy(a => a.State)
+            .Select(g => new StateSummaryDto
+            {
+                State = g.Key!,
+                AreaCount = g.Count(),
+                ClimbCount = 0 // Will calculate below
+            })
+            .OrderBy(s => s.State)
+            .ToList();
+
+        // Calculate climb counts for each state
+        foreach (var state in stateGroups)
+        {
+            var stateAreas = areas.Where(a => a.State == state.State).Select(a => a.Id).ToList();
+            var totalClimbs = 0;
+            
+            foreach (var areaId in stateAreas)
+            {
+                totalClimbs += await GetTotalClimbCount(areaId);
+            }
+            
+            state.ClimbCount = totalClimbs;
+        }
+
+        return stateGroups;
+    }
+
+    /// <summary>
+    /// Get top-level areas for a specific state
+    /// </summary>
+    [HttpGet("by-state/{state}")]
+    public async Task<ActionResult<List<AreaSummaryDto>>> GetAreasInState(string state)
+    {
+        var areas = await _db.Areas
+            .Where(a => a.ParentAreaId == null && a.State == state)
+            .AsNoTracking()
+            .ToListAsync();
+
+        var result = new List<AreaSummaryDto>();
+        
+        foreach (var area in areas)
+        {
+            var climbCount = await GetTotalClimbCount(area.Id);
+            
+            result.Add(new AreaSummaryDto
+            {
+                Id = area.Id,
+                Name = area.Name,
+                ClimbCount = climbCount
+            });
+        }
+
+        return result;
+    }
+
+    /// <summary>
     /// Get all top-level areas (no parent) with climb counts
     /// </summary>
     [HttpGet]
@@ -88,6 +155,49 @@ public class AreasController : ControllerBase
     }
 
     /// <summary>
+    /// Get climbing areas near a location
+    /// </summary>
+    [HttpGet("nearby")]
+    public async Task<IActionResult> GetNearbyAreas(
+        [FromQuery] double lat, 
+        [FromQuery] double lng, 
+        [FromQuery] int radius = 50)
+    {
+        // Get all areas with coordinates
+        var areas = await _db.Areas
+            .Where(a => a.Lat.HasValue && a.Lng.HasValue)
+            .AsNoTracking()
+            .ToListAsync();
+
+        // Calculate distances and filter
+        var nearbyAreas = new List<(Area area, double distance)>();
+        
+        foreach (var area in areas)
+        {
+            var distance = CalculateDistance(lat, lng, area.Lat!.Value, area.Lng!.Value);
+            if (distance <= radius)
+            {
+                nearbyAreas.Add((area, distance));
+            }
+        }
+
+        // Sort by distance and get climb counts
+        var result = new List<AreaSummaryDto>();
+        foreach (var (area, _) in nearbyAreas.OrderBy(x => x.distance).Take(20))
+        {
+            var climbCount = await GetTotalClimbCount(area.Id);
+            result.Add(new AreaSummaryDto
+            {
+                Id = area.Id,
+                Name = area.Name,
+                ClimbCount = climbCount
+            });
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Recursively count all climbs in an area and its sub-areas
     /// </summary>
     private async Task<int> GetTotalClimbCount(int areaId)
@@ -134,9 +244,38 @@ public class AreasController : ControllerBase
         await _db.SaveChangesAsync();
         return CreatedAtAction(nameof(GetOne), new { id = area.Id }, area);
     }
+
+    /// <summary>
+    /// Calculate distance between two coordinates in miles using Haversine formula
+    /// </summary>
+    private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double R = 3959; // Earth's radius in miles
+        var dLat = ToRadians(lat2 - lat1);
+        var dLon = ToRadians(lon2 - lon1);
+        
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return R * c;
+    }
+
+    private static double ToRadians(double degrees)
+    {
+        return degrees * (Math.PI / 180);
+    }
 }
 
 // DTOs
+public class StateSummaryDto
+{
+    public string State { get; set; } = null!;
+    public int AreaCount { get; set; }
+    public int ClimbCount { get; set; }
+}
+
 public class AreaDetailDto
 {
     public int Id { get; set; }

@@ -1,10 +1,28 @@
-<div class="area-card" (click)="onCardClick()">
+<div class="area-card" [class]="'card-type-' + cardType" (click)="onCardClick()">
+  <div class="area-icon" [class]="'icon-' + cardType">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path *ngIf="cardType === 'state'" d="M3 3h18v18H3z"></path>
+      <path *ngIf="cardType === 'state'" d="M3 9h18M9 3v18"></path>
+      
+      <path *ngIf="cardType === 'area'" d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+      <circle *ngIf="cardType === 'area'" cx="12" cy="10" r="3"></circle>
+      
+      <path *ngIf="cardType === 'wall'" d="M12 2L2 7l10 5 10-5-10-5z"></path>
+      <path *ngIf="cardType === 'wall'" d="M2 17l10 5 10-5"></path>
+      <path *ngIf="cardType === 'wall'" d="M2 12l10 5 10-5"></path>
+    </svg>
+  </div>
+  
   <div class="area-card-content">
     <h3 class="area-name">{{ area.name }}</h3>
-    <p class="climb-count">{{ area.climbCount }} routes</p>
+    <p class="climb-count">
+      <span class="count-number">{{ area.climbCount }}</span>
+      <span class="count-label">{{ area.climbCount === 1 ? 'route' : 'routes' }}</span>
+    </p>
   </div>
+  
   <div class="area-card-arrow">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
       <path d="M9 18l6-6-6-6"/>
     </svg>
   </div>

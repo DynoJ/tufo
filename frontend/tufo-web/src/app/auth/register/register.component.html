@@ -1,0 +1,48 @@
+<div class="register-container">
+  <div class="register-card">
+    <h2>Create Your Account</h2>
+    <p class="subtitle">Join the community and start climbing</p>
+
+    <form (ngSubmit)="register()" class="register-form">
+      <input
+        [(ngModel)]="username"
+        name="username"
+        type="text"
+        placeholder="Username"
+        required
+      />
+      <input
+        [(ngModel)]="email"
+        name="email"
+        type="email"
+        placeholder="Email"
+        required
+      />
+      <input
+        [(ngModel)]="password"
+        name="password"
+        type="password"
+        placeholder="Password"
+        required
+      />
+      <input
+        [(ngModel)]="confirmPassword"
+        name="confirmPassword"
+        type="password"
+        placeholder="Confirm Password"
+        required
+      />
+
+      <button type="submit" [disabled]="loading">
+        {{ loading ? 'Creating Account...' : 'Sign Up' }}
+      </button>
+
+      <p *ngIf="error" class="error-msg">{{ error }}</p>
+    </form>
+
+    <p class="login-link">
+      Already have an account?
+      <a routerLink="/login">Login here</a>
+    </p>
+  </div>
+</div>

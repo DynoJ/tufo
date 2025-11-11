@@ -2,7 +2,7 @@
   <!-- Header with back button -->
   <div class="browser-header">
     <button 
-      *ngIf="currentArea && currentArea.id !== 0" 
+      *ngIf="viewMode !== 'states'" 
       class="back-button"
       (click)="goBack()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -15,15 +15,11 @@
 
   <!-- Breadcrumbs -->
   <nav class="breadcrumbs" *ngIf="breadcrumbs.length > 0">
-    <button class="breadcrumb-item" (click)="onBreadcrumbClick(0)">
-      All Locations
-    </button>
-    <span class="breadcrumb-separator">/</span>
     <button 
       *ngFor="let crumb of breadcrumbs; let last = last"
       class="breadcrumb-item"
       [class.active]="last"
-      (click)="onBreadcrumbClick(crumb.id)">
+      (click)="onBreadcrumbClick(crumb)">
       {{ crumb.name }}
     </button>
   </nav>
@@ -37,19 +33,20 @@
   <!-- Error State -->
   <div *ngIf="error" class="error-message">
     <p>{{ error }}</p>
-    <button (click)="loadTopLevelAreas()">Try Again</button>
+    <button (click)="viewMode === 'states' ? loadStates() : goBack()">Try Again</button>
   </div>
 
   <!-- Sub-Areas Section -->
   <div *ngIf="!loading && !error && currentArea && currentArea.subAreas.length > 0" class="areas-section">
     <h2 class="section-title">
-      {{ currentArea.climbs.length > 0 ? 'Walls' : 'Areas' }}
+      {{ viewMode === 'states' ? 'States' : (currentArea.climbs.length > 0 ? 'Walls' : 'Areas') }}
     </h2>
     <div class="areas-grid">
       <app-area-card 
         *ngFor="let area of currentArea.subAreas"
         [area]="area"
-        (areaClick)="onAreaClick($event)">
+        [cardType]="viewMode === 'states' ? 'state' : (currentArea.climbs.length > 0 ? 'wall' : 'area')"
+        (areaClick)="onAreaClick(area)">
       </app-area-card>
     </div>
   </div>
@@ -65,7 +62,7 @@
         <div class="climb-info">
           <h3 class="climb-name">{{ climb.name }}</h3>
           <div class="climb-meta">
-            <span class="climb-type">{{ climb.type }}</span>
+            <span class="climb-type" [class]="'type-' + climb.type.toLowerCase()">{{ climb.type }}</span>
             <span *ngIf="climb.yds" class="climb-grade">{{ climb.yds }}</span>
           </div>
         </div>
