@@ -12,13 +12,32 @@
         <p>Getting your location...</p>
       </div>
 
-      <iframe 
-        *ngIf="!loadingLocation && nearbyMapUrl"
-        [src]="nearbyMapUrl" 
-        class="nearby-map"
-        frameborder="0" 
-        allowfullscreen>
-      </iframe>
+      <div id="map" class="nearby-map"></div>
+      
+      <div *ngIf="loadingAreas" class="map-overlay">
+        <div class="spinner"></div>
+        <p>Loading climbing areas...</p>
+      </div>
+    </div>
+
+    <!-- Map Legend -->
+    <div class="map-legend">
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #10b981;"></div>
+        <span>100+ routes</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #2196f3;"></div>
+        <span>50-99 routes</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #f59e0b;"></div>
+        <span>20-49 routes</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot" style="background: #ef4444;"></div>
+        <span>&lt;20 routes</span>
+      </div>
     </div>
   </section>
 

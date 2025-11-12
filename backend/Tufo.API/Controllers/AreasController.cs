@@ -155,7 +155,7 @@ public class AreasController : ControllerBase
     }
 
     /// <summary>
-    /// Get climbing areas near a location
+    /// Get climbing areas near a location (parent areas only - like "Barton Creek Greenbelt", "Gus Fruh")
     /// </summary>
     [HttpGet("nearby")]
     public async Task<IActionResult> GetNearbyAreas(
@@ -163,16 +163,20 @@ public class AreasController : ControllerBase
         [FromQuery] double lng, 
         [FromQuery] int radius = 50)
     {
-        // Get all areas with coordinates
+        // Get all areas with coordinates and include their sub-areas to determine if they're parent areas
         var areas = await _db.Areas
             .Where(a => a.Lat.HasValue && a.Lng.HasValue)
+            .Include(a => a.SubAreas)
             .AsNoTracking()
             .ToListAsync();
 
-        // Calculate distances and filter
+        // Filter to only parent areas (those with sub-areas OR top-level areas with no parent)
+        var parentAreas = areas.Where(a => a.SubAreas.Any() || a.ParentAreaId == null).ToList();
+
+        // Calculate distances and filter by radius
         var nearbyAreas = new List<(Area area, double distance)>();
         
-        foreach (var area in areas)
+        foreach (var area in parentAreas)
         {
             var distance = CalculateDistance(lat, lng, area.Lat!.Value, area.Lng!.Value);
             if (distance <= radius)
@@ -190,7 +194,9 @@ public class AreasController : ControllerBase
             {
                 Id = area.Id,
                 Name = area.Name,
-                ClimbCount = climbCount
+                ClimbCount = climbCount,
+                Lat = area.Lat,
+                Lng = area.Lng
             });
         }
 
@@ -293,6 +299,8 @@ public class AreaSummaryDto
     public int Id { get; set; }
     public string Name { get; set; } = null!;
     public int ClimbCount { get; set; }
+    public double? Lat { get; set; }
+    public double? Lng { get; set; }
 }
 
 public class ClimbSummaryDto
